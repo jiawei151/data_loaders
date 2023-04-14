@@ -1,6 +1,12 @@
-# DataLoaders (for 3D reconstruction)
+# DataLoaders (ours for 3D reconstruction)
 
 We are modifying these data loaders for 3D reconstruction evaluation. Currently, [NeRF] is successfully evaludated!
+
+---
+
+Below is the original README content.
+
+
 
 
 This contains various data loaders for a series of datasets:
