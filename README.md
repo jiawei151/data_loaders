@@ -1,6 +1,6 @@
 # DataLoaders (ours for 3D reconstruction)
 
-We are modifying these data loaders for 3D reconstruction evaluation. Currently, [NeRF] is successfully evaludated!
+We are modifying these data loaders for supporting 3D reconstruction evaluation. Currently, [NeRF] is successfully evaludated!
 
 ---
 
