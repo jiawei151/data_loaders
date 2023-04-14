@@ -1,4 +1,10 @@
 #include "data_loaders/DataLoaderNerf.h"
+// #include <Python.h>
+// #include "/opt/conda/include/python3.8/Python.h"
+// #include "Python.h"
+// #include "/opt/conda/lib/python3.8/site-packages/numpy/core/include/numpy/arrayobject.h"
+#include <happly.h>
+#include "cnpy.h"
 
 #include <limits>
 
@@ -152,6 +158,118 @@ void DataLoaderNerf::init_data_reading(){
 }
 
 void DataLoaderNerf::init_poses(){
+    // read ply by python
+    std::string mesh_file = m_dataset_path.string()+ "/" + m_restrict_to_scene_name + "/points_of_interest.ply";
+
+    happly::PLYData plyIn(mesh_file);
+    std::vector<std::array<double, 3>> vPos = plyIn.getVertexPositions();
+    double bbox_xmax, bbox_ymax, bbox_zmax;
+    double bbox_xmin, bbox_ymin, bbox_zmin;
+    double center_x, center_y, center_z;
+    double radius;
+    bbox_xmax = -1000; bbox_ymax = -1000; bbox_zmax = -1000; bbox_xmin = 1000; bbox_ymin = 1000; bbox_zmin = 1000;
+    for (int i=0; i<vPos.size(); i++){
+        if (vPos[i][0] > bbox_xmax){
+            bbox_xmax = vPos[i][0];
+        }
+        if (vPos[i][0] < bbox_xmin){
+            bbox_xmin = vPos[i][0];
+        }
+        if (vPos[i][1] > bbox_ymax){
+            bbox_ymax = vPos[i][1];
+        }
+        if (vPos[i][1] < bbox_ymin){
+            bbox_ymin = vPos[i][1];
+        }
+        if (vPos[i][2] > bbox_zmax){
+            bbox_zmax = vPos[i][2];
+        }
+        if (vPos[i][2] < bbox_zmin){
+            bbox_zmin = vPos[i][2];
+        }
+    }
+    center_x = (bbox_xmax+bbox_xmin) * 0.5;
+    center_y = (bbox_ymax+bbox_ymin) * 0.5;
+    center_z = (bbox_zmax+bbox_zmin) * 0.5;
+    radius = -1000;
+    for (int i=0; i<vPos.size(); ++i){
+        double radiusi = std::sqrt((vPos[i][0]-center_x)*(vPos[i][0]-center_x)+(vPos[i][1]-center_y)*(vPos[i][1]-center_y)+(vPos[i][2]-center_z)*(vPos[i][2]-center_z));
+        if (radiusi > radius){
+            radius = radiusi;
+        }
+    }
+
+    Eigen::Affine3d S;
+    Eigen::Vector3d S_tmp_vector;
+    S_tmp_vector.x() = center_x;
+    S_tmp_vector.y() = center_y;
+    S_tmp_vector.z() = center_z;
+    S.setIdentity();
+    S.linear()(0,0)=radius;
+    S.linear()(1,1)=radius;
+    S.linear()(2,2)=radius;
+    S.translation() = S_tmp_vector.cast<double>();
+
+    // Py_Initialize();
+    // if (!Py_IsInitialized()) {
+	// 	printf("init failed");
+	// 	exit(124);
+	// }
+    // PyRun_SimpleString("import sys; sys.path.insert(0, '/workspace/data_loaders/python')");
+    // PyObject *pModule,*pFunc;
+    // PyObject *pArgs, *pValue;
+    // // pModule = PyImport_Import(PyUnicode_FromString("get_ply"));
+    // pModule = PyImport_ImportModule("get_ply");
+    // if (!pModule) {
+    //     printf("ERROR importing module");
+    //     exit(121);
+    // } 
+    // // PyObject* pModule = PyImport_ImportModule("my_module");
+    // pFunc = PyObject_GetAttrString(pModule, "get_scale_mat");
+    // // PyCodeObject* code_obj = PyFunction_GetCode((PyFunctionObject*)pFunc);
+    // if (!pFunc) {
+    //     printf("ERROR importing func");
+    //     exit(122);
+    // } 
+    // if (!PyCallable_Check(pFunc)) {
+    //     PyErr_SetString(PyExc_TypeError, "Object is not callable");
+    //     exit(123);
+    // }
+    // pArgs = PyTuple_Pack(1, PyUnicode_FromString(mesh_file.c_str()));
+    // pValue = PyObject_CallObject(pFunc, pArgs);
+    // // pValue = PyObject_CallFunctionObjArgs(pFunc, pArgs);
+    // if (!pValue) {
+    //     printf("ERROR return");
+    //     exit(-1);
+    // } 
+    // PyArrayObject *np_ret = reinterpret_cast<PyArrayObject*>(pValue);
+
+    // Convert back to C++ array and print.
+    // int len = PyArray_SHAPE(np_ret)[0];
+
+    // float scale_array_data[16];
+    // for (int i=0; i<16; ++i){
+    //     scale_array_data[i] = *(reinterpret_cast<float*>(PyArray_DATA(np_ret))+i);
+    // }
+
+
+    // cnpy::NpyArrayPyObject scale_array = pValue;
+    // // cnpy::NpyArray scale_array = PyFloat_AsDouble(pValue);
+    // double* scale_array_data = scale_array.data<double>();
+    // Eigen::Affine3f S_tmp;
+    // Eigen::Affine3d S;
+    // S_tmp.matrix() = Eigen::Map<Eigen::Matrix<float,4,4,Eigen::RowMajor> >(scale_array_data);
+    // S=S_tmp.cast<double>();
+
+
+
+    // // Py_DECREF(pModule);
+    // // Py_DECREF(pFunc);
+    // // Py_DECREF(pArgs);
+    // // Py_DECREF(pValue);
+    // // Py_DECREF(np_ret);
+    // Py_Finalize();
+
     //read transforms_test.json (or whichever file is corresponding to the mode we are on)
 
     //get the path to this json file
@@ -168,6 +286,7 @@ void DataLoaderNerf::init_poses(){
     m_camera_angle_x = json["camera_angle_x"].number_value();
 
     //read all the poses
+    bool mykey = false;
     for (auto &k : json["frames"].array_items()) {
         fs::path key= k.string_value();
 
@@ -187,6 +306,7 @@ void DataLoaderNerf::init_poses(){
                 tf_world_cam.matrix()(r,c) =k["transform_matrix"][r][c].number_value();
             }
         }
+        tf_world_cam.translation()=S.cast<double>().inverse()*tf_world_cam.translation();
         //nerf uses a opengl system https://github.com/bmild/nerf#already-have-poses
         //so the x is towards right, y up and z is backwards. 
         //we need x is right y down and z towards the frame
@@ -206,8 +326,42 @@ void DataLoaderNerf::init_poses(){
         Eigen::Matrix3d worldGL_world_rot;
         worldGL_world_rot = Eigen::AngleAxisd(0.5*M_PI, Eigen::Vector3d::UnitX());
         m_tf_worldGL_world.matrix().block<3,3>(0,0)=worldGL_world_rot;
+        // tf_world_cam=m_tf_worldGL_world.inverse()*tf_world_cam; // re-implement
+        // tf_cam_world = tf_world_cam.inverse();
         tf_cam_world=tf_cam_world*m_tf_worldGL_world;
 
+        if(m_scene_scale_multiplier>0.0){
+            Eigen::Affine3d tf_world_cam_rescaled = tf_cam_world.inverse();
+            tf_world_cam_rescaled.translation()*=m_scene_scale_multiplier;
+            tf_cam_world=tf_world_cam_rescaled.inverse();
+        }
+
+        Eigen::Affine3f rescaling_matrix;
+        // Eigen::Vector3f rescaling_vector;
+        // rescaling_vector.x() = m_scene_scale_multiplier;
+        // rescaling_vector.y() = m_scene_scale_multiplier;
+        // rescaling_vector.z() = m_scene_scale_multiplier;
+        rescaling_matrix.setIdentity();
+        rescaling_matrix.linear()(0,0)=m_scene_scale_multiplier;
+        rescaling_matrix.linear()(1,1)=m_scene_scale_multiplier;
+        rescaling_matrix.linear()(2,2)=m_scene_scale_multiplier;
+        // rescaling_matrix.translation() = rescaling_vector.cast<float>();
+
+        
+
+
+        if (mykey == false){
+            Eigen::Affine3f S_test;
+            S_test.setIdentity();
+            S_test.linear()(0,0) = S.cast<float>()(0,0) * 150;
+            S_test.linear()(1,1) = S.cast<float>()(1,1) * 150;
+            S_test.linear()(2,2) = S.cast<float>()(2,2) * 150;
+            S_test.translation() = S.cast<float>().translation() * 150;
+
+            Eigen::Affine3f tf_easypbr_nerf = rescaling_matrix*m_tf_worldGL_world.cast<float>().inverse()*S_test.inverse();
+            m_scene2tf_easypbr_nerf[m_restrict_to_scene_name] = tf_easypbr_nerf;
+            mykey = true;
+        }
 
 
         // VLOG(1) << file_name;
@@ -354,12 +508,14 @@ void DataLoaderNerf::read_data(){
 
 
         //rescale things if necessary
-        if(m_scene_scale_multiplier>0.0){
-            Eigen::Affine3f tf_world_cam_rescaled = frame.tf_cam_world.inverse();
-            tf_world_cam_rescaled.translation()*=m_scene_scale_multiplier;
-            frame.tf_cam_world=tf_world_cam_rescaled.inverse();
-        }
-
+        // comment here, re-implement to init_poses()
+        // if(m_scene_scale_multiplier>0.0){
+        //     Eigen::Affine3f tf_world_cam_rescaled = frame.tf_cam_world.inverse();
+        //     tf_world_cam_rescaled.translation()*=m_scene_scale_multiplier;
+        //     frame.tf_cam_world=tf_world_cam_rescaled.inverse();
+        // }
+        // Eigen::Affine3f mytf_world_cam = frame.tf_cam_world.inverse();
+        // frame.tf_cam_world = mytf_world_cam.inverse();
         m_frames.push_back(frame);
         // VLOG(1) << "pushback and frames is " << m_frames.size();
 
@@ -579,4 +735,10 @@ void DataLoaderNerf::set_mode_test(){
 }
 void DataLoaderNerf::set_mode_validation(){
     m_mode="val";
+}
+
+
+Eigen::Affine3f DataLoaderNerf::get_tf_easypbr_nerf(){
+    // return m_tf_easypbr_dtu;
+    return m_scene2tf_easypbr_nerf[get_restrict_to_scene_name()];
 }

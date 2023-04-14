@@ -563,6 +563,7 @@ void DataLoaderDTU::read_poses_and_intrinsics(){
 
                 //atteptm2
                 //rotate
+                // TODO: delete
                 Eigen::Quaternionf q = Eigen::Quaternionf( Eigen::AngleAxis<float>( m_rotate_scene_x_axis_degrees * M_PI / 180.0 ,  Eigen::Vector3f::UnitX() ) );
                 // Eigen::Quaternionf q = Eigen::Quaternionf( Eigen::AngleAxis<float>( 0 * M_PI / 180.0 ,  Eigen::Vector3f::UnitX() ) );
                 Eigen::Affine3f tf_rot;
@@ -572,6 +573,7 @@ void DataLoaderDTU::read_poses_and_intrinsics(){
                 Eigen::Affine3f tf_cam_world=tf_world_cam.inverse();
 
                 //rescale
+                // TODO: 1
                 Eigen::Affine3f tf_world_cam_rescaled = tf_cam_world.inverse();
                 // tf_world_cam_rescaled.translation()*=m_scene_scale_multiplier;
                 Eigen::Affine3f recaling_matrix;

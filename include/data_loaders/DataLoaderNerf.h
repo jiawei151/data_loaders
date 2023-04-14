@@ -60,6 +60,8 @@ public:
     void set_mode_train(); //set the loader so that it starts reading form the training set
     void set_mode_test();
     void set_mode_validation();
+    Eigen::Affine3f get_tf_easypbr_nerf();
+
 
 
 
@@ -98,5 +100,6 @@ private:
     std::vector<boost::filesystem::path> m_imgs_paths; //contains all the filenames that of the images we want to read
     std::vector< easy_pbr::Frame > m_frames;
     float m_camera_angle_x;
+    std::unordered_map<std::string, Eigen::Affine3f> m_scene2tf_easypbr_nerf; // TODO: 3d or 3f
 
 };

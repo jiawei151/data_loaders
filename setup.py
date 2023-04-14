@@ -21,6 +21,15 @@ class CMakeExtension(Extension):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 
+        # Use pkg-config to retrieve the necessary linker and compiler flags
+        # pkg_config = '--cflags --libs python3-embed'.split()
+        # pkg_flags = [flag.strip() for flag in os.popen('pkg-config ' + ' '.join(pkg_config)).read().split()]
+
+        # # Pass the pkg-config flags to the Extension module
+        # # self.include_dirs.append()
+        # self.extra_compile_args.append(pkg_flags)
+        # self.extra_link_args.append(pkg_flags)
+
 
 class CMakeBuild(build_ext):
     def run(self):
