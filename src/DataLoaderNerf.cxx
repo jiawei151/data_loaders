@@ -328,7 +328,7 @@ void DataLoaderNerf::init_poses(){
         m_tf_worldGL_world.matrix().block<3,3>(0,0)=worldGL_world_rot;
         // tf_world_cam=m_tf_worldGL_world.inverse()*tf_world_cam; // re-implement
         // tf_cam_world = tf_world_cam.inverse();
-        tf_cam_world=tf_cam_world*m_tf_worldGL_world;
+        // tf_cam_world=tf_cam_world*m_tf_worldGL_world;
 
         if(m_scene_scale_multiplier>0.0){
             Eigen::Affine3d tf_world_cam_rescaled = tf_cam_world.inverse();
@@ -358,9 +358,12 @@ void DataLoaderNerf::init_poses(){
             S_test.linear()(2,2) = S.cast<float>()(2,2) * 150;
             S_test.translation() = S.cast<float>().translation() * 150;
 
-            Eigen::Affine3f tf_easypbr_nerf = rescaling_matrix*m_tf_worldGL_world.cast<float>().inverse()*S_test.inverse();
+            Eigen::Affine3f tf_easypbr_nerf = rescaling_matrix*S_test.inverse();
             m_scene2tf_easypbr_nerf[m_restrict_to_scene_name] = tf_easypbr_nerf;
             mykey = true;
+            Eigen::Affine3f tf_envmap_nerf = rescaling_matrix*S.cast<float>().inverse();
+            m_scene2tf_envmap_nerf[m_restrict_to_scene_name] = tf_envmap_nerf;
+
         }
 
 
@@ -742,3 +745,8 @@ Eigen::Affine3f DataLoaderNerf::get_tf_easypbr_nerf(){
     // return m_tf_easypbr_dtu;
     return m_scene2tf_easypbr_nerf[get_restrict_to_scene_name()];
 }
+
+Eigen::Affine3f DataLoaderNerf::get_tf_envmap_nerf(){
+    return m_scene2tf_envmap_nerf[get_restrict_to_scene_name()];
+}
+

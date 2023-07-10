@@ -215,6 +215,7 @@ PYBIND11_MODULE(dataloaders, m) {
     .def("set_mode_test", &DataLoaderNerf::set_mode_test )
     .def("set_mode_validation", &DataLoaderNerf::set_mode_validation )
     .def("get_tf_easypbr_nerf", &DataLoaderNerf::get_tf_easypbr_nerf )
+    .def("get_tf_envmap_nerf", &DataLoaderNerf::get_tf_envmap_nerf )
     ;
 
     //DataLoaderEasyPBR

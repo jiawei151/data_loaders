@@ -61,8 +61,7 @@ public:
     void set_mode_test();
     void set_mode_validation();
     Eigen::Affine3f get_tf_easypbr_nerf();
-
-
+    Eigen::Affine3f get_tf_envmap_nerf();
 
 
 
@@ -101,5 +100,6 @@ private:
     std::vector< easy_pbr::Frame > m_frames;
     float m_camera_angle_x;
     std::unordered_map<std::string, Eigen::Affine3f> m_scene2tf_easypbr_nerf; // TODO: 3d or 3f
+    std::unordered_map<std::string, Eigen::Affine3f> m_scene2tf_envmap_nerf; // TODO: 3d or 3f
 
 };
